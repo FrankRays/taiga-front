@@ -148,6 +148,7 @@ Medium = ($translate, $confirm, $storage, wysiwygService, animationFrame, tgLoad
         $scope.required = !!$attrs.$attr.required
         $scope.editMode = isEditOnly || false
         $scope.mode = $storage.get('editor-mode', 'html')
+        $scope.markdown = ''
 
         wysiwygService.loadEmojis()
 
@@ -166,7 +167,9 @@ Medium = ($translate, $confirm, $storage, wysiwygService, animationFrame, tgLoad
             $scope.mode = mode
             mediumInstance.trigger('editableBlur', {}, editorMedium[0])
 
-        $scope.save = () ->
+        $scope.save = (e) ->
+            e.preventDefault() if e
+
             if $scope.mode == 'html'
                 updateMarkdownWithCurrentHtml()
 
@@ -179,7 +182,9 @@ Medium = ($translate, $confirm, $storage, wysiwygService, animationFrame, tgLoad
 
             return
 
-        $scope.cancel = () ->
+        $scope.cancel = (e) ->
+            e.preventDefault() if e
+
             if !isEditOnly
                 $scope.editMode = false
 
@@ -415,15 +420,27 @@ Medium = ($translate, $confirm, $storage, wysiwygService, animationFrame, tgLoad
                 range = MediumEditor.selection.getSelectionRange(document)
                 codeBlock = isCodeBlockSelected(range, document)
                 selection = window.getSelection()
-
+                return
                 if code == 13 && !e.shiftKey && selection.focusOffset == _.trimEnd(selection.focusNode.textContent).length
                     e.preventDefault()
-                    document.execCommand('insertHTML', false, '<p id="last-p"><br/></p>')
+                    # mediumInstance.pasteHTML('<p id="last-p"><br/></p>')
+                    # document.execCommand('insertHTML', false, '<p id="last-p"><br/></p>')
 
-                    lastP = $('#last-p').attr('id', '')
+                    # lastP = document.querySelector('#last-p')
+                    # lastP.setAttribute('id', '');
 
-                    range = document.createRange()
-                    range.selectNodeContents(lastP[0])
+                    range = selection.getRangeAt(0).cloneRange()
+                    range.collapse(false)
+
+                    console.log(range)
+
+                    el = document.createElement('p')
+                    el.innerHTML = '<br/>'
+
+
+                    range.insertNode(el)
+
+                    # range.selectNodeContents(lastP)
                     range.collapse(true);
 
                     MediumEditor.selection.selectRange(document, range)
